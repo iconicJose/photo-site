@@ -1,64 +1,332 @@
-/* style.css */
-/* This resets the default spacing so layout is predictable */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+﻿/* Optional modern typeface (keep commented until you want to opt in)
+   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+   body{
+     font-family:"Inter", Verdana, Geneva, Tahoma, sans-serif,
+                 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",
+                 Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji",sans-serif;
+   }
+*//* ===========================
+   THEME TOGGLE (panel + switch)
+   =========================== */
+/* Panel container that sits under the first image in Module A (left stack) */
+.theme-toggle-panel{
+  width:auto;
+  max-width:260px;
+  padding:10px 14px;
+  margin-block:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.75);
+  border:1px solid rgba(0,0,0,.08);
+  box-shadow:var(--shadow-sm);
+  backdrop-filter:saturate(120%) blur(4px);
+  display:flex;
+  align-items:center;
+  gap:12px;
+  justify-content:space-between;
 }
 
-/* This gives the whole page a dark background and readable text */
-body {
-  background: #0f0f0f;
-  color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
-  min-height: 100vh;
-}
-header {
-  padding: 1.5rem 1rem;
-  text-align: center;
-  border-bottom: 1px solid #222;
+html[data-theme="dark"] .theme-toggle-panel{
+  background:rgba(12,12,12,.40);
+  border-color:rgba(255,255,255,.12);
 }
 
-header h1 {
-  font-size: 2rem;
-  letter-spacing: 0.08em;
-  margin-bottom: 0.5rem;
+/* Small heading above the switch */
+.theme-toggle-header{
+  font-size:.72rem;
+  letter-spacing:.04em;
+  text-transform:lowercase;
+  color:var(--ink);
+  opacity:.85;
 }
 
-header p {
-  color: #bbbbbb;
+/* ---- Switch button ---- */
+button.toggle,
+.btn{
+  -webkit-appearance:none;
+  appearance:none;
+  border:0;
+  background:transparent;
+  cursor:pointer;
+  border-radius:14px;
+  padding:10px 14px;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  line-height:1;
+  transition:box-shadow var(--anim), background-color var(--anim), color var(--anim);
 }
 
-/* Lay out photos in a responsive grid */
-.gallery {
-  padding: 1.5rem 1rem 3rem;   /* keep the breathing room */
-  display: grid;               /* enable CSS grid */
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* auto-fit columns */
-  gap: 1rem;                   /* space between images */
-  max-width: 1200px;
-margin: 0 auto;
+button.toggle:hover,
+button.toggle:focus-visible,
+.btn:hover,
+.btn:focus-visible{
+  box-shadow:var(--shadow-md), inset 0 0 0 1px currentColor;
 }
 
-/* Make images scale cleanly inside each grid cell */
-.gallery img {
-  width: 100%;
-  height: auto;
-  max-height: 80vh;
-  display: block;
-  border-radius: 8px;
+button.toggle:focus-visible{
+  outline:2px solid rgba(0,120,255,.8);
+  outline-offset:3px;
 }
 
-/* now separate block for background */
-#vanta-bg {
-  min-height: 100vh;
-  color: white;
-  text-align: center;
-  position: relative;
-  z-index: 0;
+button.toggle .track{
+  position:relative;
+  width:54px;
+  height:28px;
+  border-radius:999px;
+  padding:3px;
+  background:var(--switch-track);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:4px;
+  transition:background var(--anim), box-shadow var(--anim);
 }
 
-header, main {
-  position: relative;
-  z-index: 1;
+button.toggle .track::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:var(--switch-track-hover);
+  transform:scaleX(0);
+  transform-origin:left center;
+  opacity:0;
+  transition:transform var(--anim), opacity var(--anim);
+  z-index:0;
+}
+
+html[data-theme="dark"] button.toggle .track::after{
+  transform-origin:right center;
+}
+
+button.toggle:hover .track::after,
+button.toggle:focus-visible .track::after,
+button.toggle .track.is-transitioning::after{
+  transform:scaleX(1);
+  opacity:1;
+}
+
+button.toggle .icon{
+  position:relative;
+  font-size:.7rem;
+  text-transform:lowercase;
+  color:var(--switch-icon);
+  opacity:.65;
+  user-select:none;
+  pointer-events:none;
+  transition:opacity var(--anim);
+  z-index:1;
+}
+
+button.toggle[aria-pressed="false"] .icon.sun{ opacity:.98; font-weight:600; }
+button.toggle[aria-pressed="true"] .icon.moon{ opacity:.98; font-weight:600; }
+
+button.toggle .thumb{
+  position:absolute;
+  top:3px;
+  left:3px;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:var(--switch-thumb);
+  box-shadow:0 1px 2px rgba(0,0,0,.25), 0 8px 20px rgba(0,0,0,.12);
+  transform:translateX(0);
+  transition:transform var(--anim), box-shadow var(--anim), background-color var(--anim);
+  z-index:1;
+}
+
+button.toggle[aria-pressed="true"] .thumb{
+  transform:translateX(26px);
+  box-shadow:0 1px 3px rgba(0,0,0,.45), 0 10px 24px rgba(0,0,0,.25);
+}
+
+/* Make sure the panel doesn’t stretch the column width */
+.module.mod-a .theme-toggle-panel{ justify-self:center }
+
+/* ------------------------------
+   Layout: Modules
+   ------------------------------ */
+
+/* Module A â€” two horizontals stacked on left, single vertical on right */
+.module-top{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:var(--gap);
+  align-items:start;
+  margin-block-end: var(--module-spacing);
+}
+
+/* Left column stack for Module A */
+.module-top .stack-left{
+  display:grid;
+  gap:var(--gap);
+  align-content:start;
+}
+
+/* Module B â€” left column vertical; right column one horizontal, then moon stack */
+.module-two{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:var(--gap);
+  align-items:start;
+  margin-block-end: var(--module-spacing);
+}
+
+.module-two .right-col{
+  display:grid;
+  gap:var(--gap);
+  align-content:start;
+}
+
+/* Row of two equal horizontals inside module-two right column */
+.module-two .right-col .row-two{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:var(--gap);
+}
+
+/* Full-width panorama section */
+.module-full{
+  margin-block: var(--module-spacing);
+}
+.module-full .card{
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-md);
+}
+.module-full img{
+  width:100%;
+  height:auto;
+  max-height: var(--panorama-max-h);
+  object-fit:cover; /* allow letterboxing only if image shorter than box */
+  object-position:center;
+}
+
+/* Moon stack helper: two images stacked vertically in a single grid cell.
+   Use this wrapper INSIDE a .card to avoid captions splitting. */
+.moon-stack{
+  display:grid;
+  gap: calc(var(--gap) * .5);
+}
+.moon-stack img{
+  width:100%;
+  height:auto;
+  object-fit:contain; /* keep the black space, do not crop */
+}
+
+/* Optional helper class for tiny caption tweaks on dark seams */
+.caption--tight{ padding:12px 14px }
+
+/* ------------------------------
+   Outer-edge alignment helpers
+   ------------------------------ */
+
+/* Force figures to occupy the full column width with no stray margins.
+   This keeps the â€œinvisible outer rectangleâ€ perfectly flush. */
+.module-top figure,
+.module-two figure,
+.module-full figure{
+  width:100%;
+  margin:0;
+}
+
+/* Ensure the first and last columns align to the container edges at any zoom */
+.module-top,
+.module-two{
+  justify-items: stretch;
+}
+
+/* ------------------------------
+   Accessibility and focus
+   ------------------------------ */
+:focus-visible{
+  outline: 2px solid rgba(0,120,255,.8);
+  outline-offset: 2px;
+}
+
+/* ------------------------------
+   Responsive
+   ------------------------------ */
+
+/* Large but narrower than desktop-max: tighten gaps slightly */
+@media (max-width: 1280px){
+  :root{ --gap: 24px; --module-spacing: 44px }
+}
+
+/* Tablet landscape */
+@media (max-width: 1024px){
+  :root{ --gap: 22px; --module-spacing: 40px }
+  .wrap{ padding-block: 32px 64px }
+}
+
+/* Tablet portrait / small laptop */
+@media (max-width: 900px){
+  :root{ --gap: 20px }
+  .module-top,
+  .module-two{
+    grid-template-columns: 1fr;   /* stack columns on small screens */
+  }
+  .module-two .right-col .row-two{
+    grid-template-columns: 1fr;   /* moons stack under each other on phones */
+  }
+  .module-full img{
+    max-height: 54vh; /* better fit on short viewports */
+  }
+}
+
+/* Phones */
+@media (max-width: 600px){
+  :root{
+    --gap: 18px;
+    --page-pad: 18px;
+    --module-spacing: 36px;
+    --radius: 8px;
+  }
+  body{ line-height:1.5 }
+  .wrap{ padding-block: 28px 56px }
+  .card{ box-shadow:none } /* reduce drop shadows on small screens */
+  .card figcaption{ font-size:.92rem }
+}
+
+/* Very small phones */
+@media (max-width: 420px){
+  :root{ --gap: 16px; --page-pad: 16px }
+  .card figcaption{ font-size:.9rem }
+}
+
+/* Tall viewports: allow a taller panorama while keeping letterboxing safe */
+@media (min-height: 980px){
+  :root{ --panorama-max-h: 78vh }
+}
+
+/* ------------------------------
+   Print (simple, no backgrounds)
+   ------------------------------ */
+@media print{
+  :root{ --gap:16px; --module-spacing:24px }
+  body{ color:#000; background:#fff; -webkit-print-color-adjust:exact }
+  .card{ box-shadow:none; border-radius:0 }
+  .card figcaption{ position:static; transform:none; background:#fff; color:#000 }
+  .wrap{ width:auto; padding:0; margin:0 }
+  .module-top,
+  .module-two{ grid-template-columns:1fr 1fr }
+  @page{ margin:12mm }
+}
+
+
+
+
+
+
+@media (prefers-reduced-motion: reduce){
+  .card figcaption{
+    transition:transform var(--anim), opacity var(--anim);
+    text-shadow:none;
+  }
+  button.toggle,
+  button.toggle .track,
+  button.toggle .track::after,
+  button.toggle .thumb{
+    transition:none;
+  }
 }
 

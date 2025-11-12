@@ -1,41 +1,437 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="light">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Photo Site</title>
-    <!-- This line tells the browser to load your CSS file so you can style the page -->
-    <link rel="stylesheet" href="style.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Photo Layout</title>
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Goal
+      - Two-column gallery made of alternating â€œmodulesâ€
+      - Each module forms a perfect outer rectangle. The stacked column may have extra gap inside, but the four module corners align (top/left/right/bottom).
+      - One full-width panorama break between Module B and Module C.
+      - No hairline rules or borders anywhere.
+      - Large at 100% zoom. Responsive down to phones with graceful reflow.
+      - Hover: long-press to reveal caption + dim the rest. Delay shortened to ~3.4s.
+      - No image cropping. Images scale within their cells; stacked columns equalize by JS to match the tall columnâ€™s height.
+    -->
+
+    <style>
+      /* ------------------------------ */
+      /* Root scales and theme tokens */
+      /* ------------------------------ */
+      :root {
+        /* layout rhythm */
+        --gap: 24px; /* tightened from 28px */
+        --page-pad: 20px; /* page padding */
+        --max-wrap: 1600px; /* desktop max width */
+
+        /* color system */
+        --bg: #ffffff;
+        --ink: #0f0f0f; /* caption + focus */
+        --dimmed: 0.34;
+        --caption-bg: rgba(0, 0, 0, 0.72);
+        --caption-pad: 16px 18px;
+        --caption-color: #f5f5f5;
+        --anim: 280ms ease;
+        --hover-delay: 3400ms; /* shortened by ~1â€“2s */
+
+        /* responsive breakpoints */
+        --bp-tablet: 980px;
+        --bp-phone: 620px;
+      }
+
+      /* ------------------------------ */
+      /* Base reset and typography */
+      /* ------------------------------ */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji",
+          "Segoe UI Emoji", sans-serif;
+        text-rendering: optimizeLegibility;
+      }
+
+      /* Container width */
+      .wrap {
+        width: min(var(--max-wrap), 100vw - 2 * var(--page-pad));
+        margin-inline: auto;
+        padding-block: 40px 84px; /* breathing room top/bottom */
+      }
+
+      /* Media defaults â€” important for hairline removal */
+      img {
+        display: block; /* remove inline baseline gap that can look like a hairline */
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      /* Remove all default margins that could â€œlookâ€ like rules */
+      figure {
+        margin: 0;
+      }
+
+      section {
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+
+      /* ------------------------------ */
+      /* Card with optional caption */
+      /* ------------------------------ */
+      .card {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .card figcaption {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: var(--caption-pad);
+        background: var(--caption-bg);
+        color: var(--caption-color);
+        line-height: 1.35;
+        font-size: 0.95rem;
+        transform: translateY(100%); /* hidden by default */
+        transition: transform var(--anim);
+        pointer-events: none;
+      }
+
+      .card.show-caption figcaption {
+        transform: translateY(0);
+      }
+
+      /* Focus mode: dim all but the active card */
+      .dim-mode .card:not(.active) {
+        opacity: var(--dimmed);
+        filter: grayscale(0.06);
+        transition: opacity var(--anim), filter var(--anim);
+      }
+
+      /* ------------------------------ */
+      /* Module grid system */
+      /* ------------------------------ */
+      .module {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* two columns per module */
+        gap: var(--gap);
+        align-items: start;
+        justify-items: stretch;
+        margin-block: 0; /* no â€œrulesâ€ disguised as margins */
+        padding-block: 0; /* an outer spacer so modules are visually separate without hairlines */
+        /* spacing between modules is implemented by logical margin on a wrapper below */
+      }
+
+      .module + .module {
+        margin-top: 48px;
+      }
+
+      /* Column roles */
+      .col {
+        display: grid; /* we use grid to stack inner figures with gap */
+        gap: var(--gap);
+        align-content: start; /* we will override min-height via JS to equalize */
+      }
+
+      .col.tall {
+        display: block; /* a single figure fills this column */
+      }
+
+      /* Stacks (two+ images vertically) fill available height.
+         We let JS set min-height to match the opposite â€œtallâ€ column.
+         Any extra space stays inside the stack as internal gap â€” never as an outer hairline. */
+      .stack {
+        align-content: space-between;
+      }
+
+      /* Moon pair: visual grouping */
+      .moon-pair {
+        display: grid;
+        gap: var(--gap);
+      }
+
+      /* ------------------------------ */
+      /* Full-width panorama section */
+      /* ------------------------------ */
+      .module-full {
+        display: block;
+        margin-block: 56px; /* space above/below, no lines */
+      }
+
+      .module-full .card {
+        width: 100%;
+      }
+
+      /* Ensure panorama stays crisp and large on desktop */
+      .panorama img {
+        width: 100%;
+        height: auto;
+      }
+
+      /* ------------------------------ */
+      /* Responsive behavior */
+      /* ------------------------------ */
+      @media (max-width: 1200px) {
+        :root {
+          --gap: 22px;
+        }
+
+        .wrap {
+          padding-block: 36px 72px;
+        }
+
+        .module + .module {
+          margin-top: 40px;
+        }
+
+        .module-full {
+          margin-block: 48px;
+        }
+      }
+
+      @media (max-width: var(--bp-tablet)) {
+        :root {
+          --gap: 20px;
+        }
+
+        .module {
+          grid-template-columns: 1fr; /* single column modules on tablet/phone */
+        }
+
+        .module + .module {
+          margin-top: 36px;
+        }
+
+        .col,
+        .stack {
+          align-content: start;
+        }
+
+        /* equalizer will reset min-height on smaller screens */
+      }
+
+      @media (max-width: var(--bp-phone)) {
+        :root {
+          --gap: 18px;
+        }
+
+        .wrap {
+          padding-block: 28px 60px;
+        }
+
+        .module + .module {
+          margin-top: 30px;
+        }
+
+        .module-full {
+          margin-block: 36px;
+        }
+
+        .card figcaption {
+          font-size: 0.92rem;
+        }
+      }
+    </style>
   </head>
-  <body id="vanta-bg">
-  <header>
-    <h1>My Photo Dump</h1>
-    <p>I dont even have a bio on insta, I woulnt know what to put here </p>
-  </header>
 
-  <main class="gallery">
-    <img src="images/JSE_0429.jpg" alt="Moon photo">
-  </main>
+  <body>
+    <main class="wrap">
+<!-- ============================================================= -->
+<!-- MODULE A  (Right = tall; Left = stack of two horizontals)     -->
+<!-- ============================================================= -->
+<section class="module mod-a" data-equalize="right" aria-label="Module A">
+  <!-- Left stack: two minimalist horizontals -->
+  <div class="col stack left">
+    <figure class="card">
+      <img src="images\1 Grouped Minimalist Birds H.jpg"
+           alt="Small flock of birds arranged on an open, pale sky; minimalist composition." />
+      <figcaption>
+        Grouped minimalist birds - a distant flock on a clean horizon. Negative space emphasizes movement.
+      </figcaption>
+    </figure>
 
-  <script src="script.js"></script>
-  <script src="p5.min.js"></script>
-<script src="vanta.trunk.min.js"></script>
-<script>
-VANTA.TRUNK({
-  el: "#vanta-bg",
-  mouseControls: true,
-  touchControls: true,
-  gyroControls: false,
-  minHeight: 200.00,
-  minWidth: 200.00,
-  scale: 1.00,
-  scaleMobile: 1.00,
-  color: 0xb890c5,
-  backgroundColor: 0x0,
-  spacing: 10.00,
-  chaos: 1.50
-})
-</script>
-</body>
+    <div class="theme-toggle-panel" role="group" aria-label="Theme">
+      <div class="theme-toggle-header">choose your experience</div>
+      <button
+        id="themeSwitch"
+        class="toggle"
+        type="button"
+        aria-pressed="false"
+        aria-label="Toggle light or dark theme"
+      >
+        <span class="track" aria-hidden="true">
+          <span class="icon sun" aria-hidden="true">&#9728;</span>
+          <span class="icon moon" aria-hidden="true">&#9790;</span>
+          <span class="thumb" aria-hidden="true"></span>
+        </span>
+      </button>
+    </div>
 
+    <figure class="card">
+      <img src="images\1 Single Minimalist Crow H.jpg"
+           alt="Single crow perched on a wire against a pale minimalist sky." />
+      <figcaption>
+        Single minimalist crow - solitary silhouette that balances the first flock study.
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Right tall: vertical portrait at the lake -->
+  <div class="col tall right">
+    <figure class="card">
+      <img src="images/1 lake sunset side V.jpg"
+           alt="Vertical lake portrait at sunset; subject looking sideways with layered clouds and warm horizon." />
+      <figcaption>
+        Lake sunset side – vertical portrait with layered clouds and gold on the horizon.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- MODULE B  (Left = tall; Right = stack of city + moon pair)    -->
+<!-- ============================================================= -->
+<section class="module mod-b" data-equalize="left" aria-label="Module B">
+  <!-- Left tall: 'me from far' -->
+  <div class="col tall left">
+    <figure class="card">
+      <img src="images\2 me from far.jpg"
+           alt="Long-lens view of a climber seated on a boulder ridge above a deep blue lake." />
+      <figcaption>
+        Me from far â€” telephoto perspective on the ridge with the lake sweeping below.
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Right stack: city horizontal + moon pair stacked vertically -->
+  <div class="col stack right">
+    <figure class="card">
+      <img src="images/2 Train Downtown H.jpg"
+           alt="Downtown scene with rail, brick, and trees â€” urban texture in evening light." />
+      <figcaption>
+        Train Downtown â€” brick, steel, and evening green; a quiet urban slice.
+      </figcaption>
+    </figure>
+
+    <!-- Moon pair stacked vertically (no cropping; just two horizontals one above another) -->
+    <div class="moon-pair">
+      <figure class="card">
+        <img src="images/2 Full Moon white H.jpg"
+             alt="Full moon centered on a dark sky; minimalist monochrome." />
+        <figcaption>
+          Full moon â€” centered luminance on a velvet night.
+        </figcaption>
+      </figure>
+
+      <figure class="card">
+        <img src="images/2 Half Crescent Moon H.jpg"
+             alt="Slender crescent hanging in a black field; minimalist night study." />
+        <figcaption>
+          Half crescent â€” delicate arc in negative space.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- PANORAMA BREAK (full width)                                   -->
+<!-- ============================================================= -->
+<section class="module-full panorama" aria-label="Panorama break">
+  <figure class="card">
+    <img src="images/3 Devils Lake Long.jpg"
+         alt="Wide panorama over Devilâ€™s Lake: stacked cloud bands, shoreline, and cliffs wrapping the water." />
+    <figcaption>
+      Devilâ€™s Lake panorama â€” broad bands of cloud and water stitching the valley from cliff to shore.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================= -->
+<!-- MODULE C  (Right = tall; Left = stack cave + cliff 2)         -->
+<!-- ============================================================= -->
+<section class="module mod-c" data-equalize="right" aria-label="Module C">
+  <!-- Left stack: cave silhouette + cliff 2 vertical -->
+  <div class="col stack left">
+    <figure class="card">
+      <img src="images/5 In cave Cavepoint.jpg"
+           alt="Silhouette in a low cave opening at Cave Point; lake horizon glows outside the arch." />
+      <figcaption>
+        In cave, Cave Point â€” low ceiling, bright horizon; silhouette framed by rock.
+      </figcaption>
+    </figure>
+
+    <figure class="card">
+      <img src="images/4 Hanging off cliff 2.jpg"
+           alt="Seated figure on coastal rock ledge above choppy water, pointing along the shoreline." />
+      <figcaption>
+        Hanging off cliff (2) â€” ledge exposure and textured water below.
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Right tall: main cliff vertical -->
+  <div class="col tall right">
+    <figure class="card">
+      <img src="images/4 Hanging Off Cliff V.jpg"
+           alt="Climber on a steep rock chute; dramatic vertical stone textures and narrow gorge." />
+      <figcaption>
+        Hanging Off Cliff (V) â€” steep chute, gritty stone, and focus on movement.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================================================= -->
+<!-- MODULE D  (Left = tall; Right = empty stack spacer)           -->
+<!-- ============================================================= -->
+<section class="module mod-d" data-equalize="left" aria-label="Module D">
+  <!-- Left tall: sunset vertical at Cave Point -->
+  <div class="col tall left">
+    <figure class="card">
+      <img src="images/5 Sunset at Cavepoint V.jpg"
+           alt="Vertical silhouette on a rock spur at Cave Point against pink-orange sunset water." />
+      <figcaption>
+        Sunset at Cave Point (V) â€” dusk color over the water with a lone figure on the spur.
+      </figcaption>
+    </figure>
+  </div>
+
+  <!-- Right stack (currently empty by design).
+       We keep a spacer so the equalizer can still align corners without adding any hairlines. -->
+  <div class="col stack right">
+    <div class="spacer" aria-hidden="true"></div>
+  </div>
+</section>
+    </main>
+    <script src="script.js" defer></script>
+  </body>
 </html>
+<!-- //complete -->
+
+
+
+
+
+
