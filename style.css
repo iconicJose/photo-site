@@ -1,4 +1,18 @@
 /* style.css */
+:root {
+  --anim: 280ms ease;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.32);
+}
+
+/* Optional modern font face (uncomment to enable Inter with Verdana stack fallback) */
+/*
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+body {
+  font-family: "Inter", Verdana, Geneva, Tahoma, Arial, Helvetica, sans-serif;
+}
+*/
+
 /* This resets the default spacing so layout is predictable */
 * {
   box-sizing: border-box;
@@ -10,8 +24,12 @@
 body {
   background: #0f0f0f;
   color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Verdana, Geneva, Tahoma, Arial, Helvetica, sans-serif;
+  line-height: 1.48;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 header {
   padding: 1.5rem 1rem;
@@ -36,7 +54,7 @@ header p {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* auto-fit columns */
   gap: 1rem;                   /* space between images */
   max-width: 1200px;
-margin: 0 auto;
+  margin: 0 auto;
 }
 
 /* Make images scale cleanly inside each grid cell */
@@ -62,3 +80,102 @@ header, main {
   z-index: 1;
 }
 
+/* Caption smoothing */
+.card {
+  position: relative;
+  overflow: hidden;
+}
+
+.card figure,
+.card img {
+  display: block;
+  width: 100%;
+}
+
+.card figcaption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 1.25rem;
+  background: linear-gradient(180deg, rgba(15, 15, 15, 0) 0%, rgba(15, 15, 15, 0.88) 100%);
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform var(--anim), opacity var(--anim), letter-spacing var(--anim), text-shadow var(--anim);
+  letter-spacing: 0.01em;
+  line-height: 1.48;
+  text-shadow: none;
+  will-change: transform, opacity;
+}
+
+.card.active figcaption,
+.card:focus-within figcaption,
+.card:hover figcaption {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.card.active figcaption {
+  font-weight: 550;
+}
+
+.card:focus-within figcaption,
+.card:hover figcaption {
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.16);
+}
+
+/* Button / toggle smoothing */
+.toggle,
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 12px;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--anim), color var(--anim), box-shadow var(--anim);
+}
+
+.toggle:hover,
+.toggle:focus,
+.toggle:focus-visible,
+.btn:hover,
+.btn:focus,
+.btn:focus-visible {
+  box-shadow: var(--shadow-md), inset 0 0 0 1px currentColor;
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.toggle:focus-visible,
+.btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --anim: 0.01ms;
+  }
+
+  .card figcaption {
+    transition: transform var(--anim), opacity var(--anim);
+    letter-spacing: 0.01em;
+    text-shadow: none;
+  }
+
+  .card:focus-within figcaption,
+  .card:hover figcaption {
+    letter-spacing: 0.01em;
+    text-shadow: none;
+  }
+
+  .toggle,
+  .btn {
+    transition: none;
+  }
+}
