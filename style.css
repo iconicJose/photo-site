@@ -1,0 +1,50 @@
+/* style.css */
+/* This resets the default spacing so layout is predictable */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* This gives the whole page a dark background and readable text */
+body {
+  background: #0f0f0f;
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+header {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid #222;
+}
+
+header h1 {
+  font-size: 2rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+
+header p {
+  color: #bbbbbb;
+}
+
+/* Lay out photos in a responsive grid */
+.gallery {
+  padding: 1.5rem 1rem 3rem;   /* keep the breathing room */
+  display: grid;               /* enable CSS grid */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* auto-fit columns */
+  gap: 1rem;                   /* space between images */
+  max-width: 1200px;
+margin: 0 auto;
+}
+
+/* Make images scale cleanly inside each grid cell */
+.gallery img {
+  width: 100%;     /* fill the grid cell width */
+  height: auto;    /* keep original aspect ratio */
+  max-height: 80vh;   /* limit to 80% of viewport height */
+  display: block;  /* remove inline-gap below images */
+  border-radius: 8px;  /* slight rounding; optional */
+}
+
