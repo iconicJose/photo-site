@@ -7,10 +7,10 @@
     <!-- This line tells the browser to load your CSS file so you can style the page -->
     <link rel="stylesheet" href="style.css">
   </head>
-  <body>
+  <body id="vanta-bg">
   <header>
-    <h1>Jose’s Photo Site</h1>
-    <p>Selected shots, experiments, and layout tests.</p>
+    <h1>My Photo Dump</h1>
+    <p>I dont even have a bio on insta, I woulnt know what to put here </p>
   </header>
 
   <main class="gallery">
@@ -18,6 +18,24 @@
   </main>
 
   <script src="script.js"></script>
+  <script src="p5.min.js"></script>
+<script src="vanta.trunk.min.js"></script>
+<script>
+VANTA.TRUNK({
+  el: "#vanta-bg",
+  mouseControls: true,
+  touchControls: true,
+  gyroControls: false,
+  minHeight: 200.00,
+  minWidth: 200.00,
+  scale: 1.00,
+  scaleMobile: 1.00,
+  color: 0xb890c5,
+  backgroundColor: 0x0,
+  spacing: 10.00,
+  chaos: 1.50
+})
+</script>
 </body>
 
 </html>

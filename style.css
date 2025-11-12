@@ -41,10 +41,24 @@ margin: 0 auto;
 
 /* Make images scale cleanly inside each grid cell */
 .gallery img {
-  width: 100%;     /* fill the grid cell width */
-  height: auto;    /* keep original aspect ratio */
-  max-height: 80vh;   /* limit to 80% of viewport height */
-  display: block;  /* remove inline-gap below images */
-  border-radius: 8px;  /* slight rounding; optional */
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+  display: block;
+  border-radius: 8px;
+}
+
+/* now separate block for background */
+#vanta-bg {
+  min-height: 100vh;
+  color: white;
+  text-align: center;
+  position: relative;
+  z-index: 0;
+}
+
+header, main {
+  position: relative;
+  z-index: 1;
 }
 
