@@ -41,6 +41,10 @@
         --bp-phone: 620px;
       }
 
+      html[data-theme="dark"] {
+        --bg: linear-gradient(140deg, #050505 0%, #171717 42%, #1f1f1f 100%);
+      }
+
       /* ------------------------------ */
       /* Base reset and typography */
       /* ------------------------------ */
@@ -250,6 +254,184 @@
 
         .card figcaption {
           font-size: 0.92rem;
+        }
+      }
+
+      /* --------------------------------------------
+         Typography & toggle smoothing overrides
+         -------------------------------------------- */
+      body {
+        font-family: Verdana, Geneva, Tahoma, sans-serif,
+          system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+          "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+        line-height: 1.48;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      .card figcaption {
+        opacity: 0;
+        letter-spacing: 0;
+        font-weight: 500;
+        text-shadow: none;
+        transition: transform var(--anim), opacity var(--anim),
+          letter-spacing var(--anim), font-weight var(--anim),
+          text-shadow var(--anim);
+      }
+
+      .card.show-caption figcaption {
+        opacity: 1;
+      }
+
+      .card.active figcaption {
+        font-weight: 550;
+        letter-spacing: 0.015em;
+        text-shadow: 0 0 1px rgba(255, 255, 255, 0.16);
+      }
+
+      .theme-toggle-panel {
+        width: min(260px, 100%);
+        padding: 10px 14px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-sm);
+        backdrop-filter: saturate(120%) blur(4px);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-content: space-between;
+        margin-block: 12px;
+        justify-self: center;
+      }
+
+      html[data-theme="dark"] .theme-toggle-panel {
+        background: rgba(12, 12, 12, 0.4);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .theme-toggle-header {
+        font-size: 0.72rem;
+        letter-spacing: 0.04em;
+        text-transform: lowercase;
+        color: var(--ink);
+        opacity: 0.85;
+      }
+
+      button.toggle {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        border-radius: 14px;
+        padding: 10px 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow var(--anim), background-color var(--anim),
+          color var(--anim);
+      }
+
+      button.toggle:focus-visible {
+        outline: 2px solid rgba(0, 120, 255, 0.8);
+        outline-offset: 3px;
+      }
+
+      button.toggle:hover,
+      button.toggle:focus-visible {
+        box-shadow: var(--shadow-md), inset 0 0 0 1px currentColor;
+      }
+
+      button.toggle .track {
+        position: relative;
+        width: 54px;
+        height: 28px;
+        border-radius: 999px;
+        padding: 3px;
+        background: var(--switch-track, rgba(0, 0, 0, 0.08));
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        transition: background var(--anim), box-shadow var(--anim);
+      }
+
+      button.toggle .track::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: var(--switch-track-hover, rgba(0, 0, 0, 0.14));
+        transform: scaleX(0);
+        transform-origin: left center;
+        opacity: 0;
+        transition: transform var(--anim), opacity var(--anim);
+      }
+
+      html[data-theme="dark"] button.toggle .track::after {
+        transform-origin: right center;
+      }
+
+      button.toggle:hover .track::after,
+      button.toggle:focus-visible .track::after,
+      button.toggle .track.is-transitioning::after {
+        transform: scaleX(1);
+        opacity: 1;
+      }
+
+      button.toggle .icon {
+        font-size: 0.7rem;
+        color: rgba(0, 0, 0, 0.7);
+        opacity: 0.65;
+        transition: opacity var(--anim);
+        z-index: 1;
+      }
+
+      html[data-theme="dark"] button.toggle .icon {
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      button.toggle[aria-pressed="false"] .icon.sun,
+      button.toggle[aria-pressed="true"] .icon.moon {
+        opacity: 0.98;
+        font-weight: 600;
+      }
+
+      button.toggle .thumb {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--switch-thumb, #0f0f0f);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25),
+          0 8px 20px rgba(0, 0, 0, 0.12);
+        transform: translateX(0);
+        transition: transform var(--anim), box-shadow var(--anim),
+          background-color var(--anim);
+      }
+
+      button.toggle[aria-pressed="true"] .thumb {
+        transform: translateX(26px);
+        background: var(--switch-thumb, #f5f5f5);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45),
+          0 10px 24px rgba(0, 0, 0, 0.25);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .card figcaption {
+          transition: transform var(--anim), opacity var(--anim);
+          text-shadow: none;
+        }
+
+        button.toggle,
+        button.toggle .track,
+        button.toggle .track::after,
+        button.toggle .thumb {
+          transition: none;
         }
       }
     </style>

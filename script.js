@@ -1,6 +1,5 @@
-```javascript
-/* ======================================================================
-   Interaction: delayed hover to reveal the current card’s caption while
+﻿/* ======================================================================
+   Interaction: delayed hover to reveal the current cardâ€™s caption while
    dimming all other cards. Delay set via --hover-delay (CSS var).
    ====================================================================== */
 (function () {
@@ -49,7 +48,7 @@
 })();
 
 /* ======================================================================
-   Equalizer: make each module’s two columns share the same OUTER height
+   Equalizer: make each moduleâ€™s two columns share the same OUTER height
    without cropping any image.
 
    Strategy
@@ -58,14 +57,14 @@
      * data-equalize="left" -> measure the left column and apply min-height to right stack
    - We call this after all images load and on resize.
    On narrow viewports where modules collapse to a single column, min-height is removed.
-   - This maintains the “invisible square” outer rectangle while allowing internal slack
+   - This maintains the â€œinvisible squareâ€ outer rectangle while allowing internal slack
      inside the stacked column (via align-content: space-between).
    ====================================================================== */
 (function () {
   const modules = Array.from(document.querySelectorAll(".module"));
 
   function columnHeight(col) {
-    // Use the column’s bounding box height (includes its children).
+    // Use the columnâ€™s bounding box height (includes its children).
     // No borders exist, so we get a clean outer edge with no hairlines.
     const rect = col.getBoundingClientRect();
     return Math.round(rect.height);
@@ -80,7 +79,7 @@
     const left = mod.querySelector(".col.left");
     const right = mod.querySelector(".col.right");
 
-    // On small screens we’re single column. Remove min-heights to avoid giant blanks.
+    // On small screens weâ€™re single column. Remove min-heights to avoid giant blanks.
     const singleColumn =
       getComputedStyle(mod).gridTemplateColumns.split(" ").length === 1;
     if (singleColumn) {
@@ -196,67 +195,57 @@
   lazyImages.forEach((img) => observer.observe(img));
 })();
 
-/* =============== Theme toggle (light/dark) ===============
-   Placement: paste this whole block in script.js
-   AFTER the "Lazy loading observer" block and BEFORE
-   the "Performance timing" block.
-========================================================== */
+/* ======================================================================
+   Theme toggle control
+   ====================================================================== */
 (function () {
-  const STORAGE_KEY = 'site:theme';
+  const STORAGE_KEY = "theme";
   const root = document.documentElement;
-  const body = document.body;
-  const btn  = document.getElementById('themeSwitch');
+  const btn = document.getElementById("themeSwitch");
   if (!btn || !root) return;
 
-  // System preference listener
-  const mql = window.matchMedia('(prefers-color-scheme: dark)');
+  const track = btn.querySelector(".track");
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-  // Determine starting theme: saved → system
-  function getInitialTheme() {
+  function applyTheme(mode, persist) {
+    const normalized = mode === "dark" ? "dark" : "light";
+    root.dataset.theme = normalized;
+    btn.setAttribute("aria-pressed", String(normalized === "dark"));
+    if (persist) {
+      try {
+        localStorage.setItem(STORAGE_KEY, normalized);
+      } catch (err) {
+        /* localStorage may be unavailable */
+      }
+    }
+  }
+
+  let initial = "light";
+  try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'light' || saved === 'dark') return saved;
-    return mql.matches ? 'dark' : 'light';
+    if (saved === "dark" || saved === "light") {
+      initial = saved;
+    }
+  } catch (err) {
+    initial = "light";
+  }
+  applyTheme(initial, false);
+
+  function pulseTrack() {
+    if (!track || prefersReducedMotion.matches) return;
+    track.classList.add("is-transitioning");
+    clearTimeout(pulseTrack.timer);
+    pulseTrack.timer = setTimeout(() => {
+      track.classList.remove("is-transitioning");
+    }, 320);
   }
 
-  // Apply theme to DOM and control
-  function applyTheme(mode, { save = false } = {}) {
-    const isDark = mode === 'dark';
-    root.setAttribute('data-theme', mode);
-    body.classList.toggle('is-dark', isDark);
-    btn.setAttribute('aria-pressed', String(isDark));
-    btn.classList.toggle('is-on', isDark);
-    if (save) localStorage.setItem(STORAGE_KEY, mode);
-  }
-
-  // Init
-  applyTheme(getInitialTheme());
-
-  // Toggle on click (keyboard activation works because it's a <button>)
-  btn.addEventListener('click', () => {
-    const current = root.getAttribute('data-theme') || 'light';
-    const next = current === 'dark' ? 'light' : 'dark';
-    applyTheme(next, { save: true });
+  btn.addEventListener("click", () => {
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(next, true);
+    pulseTrack();
   });
-
-  // If user hasn't chosen explicitly, follow system changes
-  mql.addEventListener?.('change', (e) => {
-    if (localStorage.getItem(STORAGE_KEY) == null) {
-      applyTheme(e.matches ? 'dark' : 'light');
-    }
-  });
-
-  // Optional helper: double-tap the button to clear saved choice and
-  // revert to following system preference.
-  let lastTap = 0;
-  btn.addEventListener('touchend', () => {
-    const now = Date.now();
-    if (now - lastTap < 350) {
-      localStorage.removeItem(STORAGE_KEY);
-      applyTheme(mql.matches ? 'dark' : 'light');
-    }
-    lastTap = now;
-  }, { passive: true });
-})();
+})();;
 
 /* ======================================================================
    Extra: Performance timing for debug (optional logging)
@@ -272,3 +261,5 @@
 
 //complete
 ```
+
+

@@ -5,7 +5,38 @@
                  system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",
                  Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji",sans-serif;
    }
-*//* ===========================
+*/
+:root{
+  --switch-track: rgba(0,0,0,.08);
+  --switch-track-hover: rgba(0,0,0,.14);
+  --switch-thumb: #0f0f0f;
+  --switch-icon: rgba(0,0,0,.7);
+}
+
+html[data-theme="dark"]{
+  --switch-track: rgba(255,255,255,.18);
+  --switch-track-hover: rgba(255,255,255,.32);
+  --switch-thumb: #f5f5f5;
+  --switch-icon: rgba(255,255,255,.85);
+}
+
+body{
+  margin:0;
+  background:var(--bg, #ffffff);
+  color:var(--ink, #111111);
+  font-family: Verdana, Geneva, Tahoma, sans-serif,
+               system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",
+               Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji",sans-serif;
+  line-height:1.48;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+html[data-theme="dark"] body{
+  background:linear-gradient(140deg, #050505 0%, #171717 45%, #1f1f1f 100%);
+}
+/* ===========================
    THEME TOGGLE (panel + switch)
    =========================== */
 /* Panel container that sits under the first image in Module A (left stack) */
@@ -53,6 +84,7 @@ button.toggle,
   align-items:center;
   gap:10px;
   line-height:1;
+  box-shadow:var(--shadow-sm);
   transition:box-shadow var(--anim), background-color var(--anim), color var(--anim);
 }
 
@@ -102,6 +134,15 @@ html[data-theme="dark"] button.toggle .track::after{
 button.toggle:hover .track::after,
 button.toggle:focus-visible .track::after,
 button.toggle .track.is-transitioning::after{
+  transform:scaleX(1);
+  opacity:1;
+}
+
+button.toggle[aria-pressed="true"] .track{
+  background:var(--switch-track-hover);
+}
+
+button.toggle[aria-pressed="true"] .track::after{
   transform:scaleX(1);
   opacity:1;
 }
@@ -317,9 +358,34 @@ button.toggle[aria-pressed="true"] .thumb{
 
 
 
+
+}
+
+
+
+
+
+
+
+
+/* Typography + caption softening */
+.card figcaption{
+  opacity:0;
+  letter-spacing:0;
+  font-weight:500;
+  text-shadow:none;
+  transition:transform var(--anim, 280ms ease), opacity var(--anim, 280ms ease), letter-spacing var(--anim, 280ms ease), font-weight var(--anim, 280ms ease), text-shadow var(--anim, 280ms ease);
+}
+.card.show-caption figcaption{ opacity:1; }
+.card.active figcaption{
+  font-weight:550;
+  letter-spacing:0.015em;
+  text-shadow:0 0 1px rgba(255,255,255,.16);
+}
+
 @media (prefers-reduced-motion: reduce){
   .card figcaption{
-    transition:transform var(--anim), opacity var(--anim);
+    transition:transform var(--anim, 280ms ease), opacity var(--anim, 280ms ease);
     text-shadow:none;
   }
   button.toggle,
@@ -329,4 +395,7 @@ button.toggle[aria-pressed="true"] .thumb{
     transition:none;
   }
 }
+
+
+
 
